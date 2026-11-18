@@ -1,0 +1,15 @@
+# PathSnap service (API + UI). Pinned versions tested with Python 3.9.6.
+
+# API (Laptop 1)
+fastapi==0.115.14
+uvicorn==0.32.1
+numpy==2.0.2
+shapely==2.0.7
+
+# UI (Laptop 2)
+streamlit==1.50.0
+folium==0.20.0
+streamlit-folium==0.25.3
+requests==2.32.5
+# urllib3 2.x prints an OpenSSL warning on macOS's built-in Python 3.9; 1.26 avoids it.
+urllib3==1.26.20
