@@ -1,0 +1,4 @@
+-r requirements-data.txt
+scipy>=1.13,<2
+matplotlib>=3.8,<4
+folium>=0.20,<1
