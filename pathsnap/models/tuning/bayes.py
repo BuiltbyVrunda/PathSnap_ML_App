@@ -21,6 +21,19 @@ SEARCH_SPACES = {
         "min_samples_leaf": ("int", 10, 200),
         "l2_regularization": ("float_log", 1e-6, 10.0),
     },
+    "lightgbm_ranker": {
+        "n_estimators": ("int", 80, 500),
+        "learning_rate": ("float_log", 0.02, 0.3),
+        "num_leaves": ("int", 8, 96),
+        "min_child_samples": ("int", 10, 200),
+        "reg_lambda": ("float_log", 1e-6, 10.0),
+    },
+    "catboost": {
+        "iterations": ("int", 150, 600),
+        "depth": ("int", 4, 9),
+        "learning_rate": ("float_log", 0.03, 0.3),
+        "l2_leaf_reg": ("float_log", 1.0, 20.0),
+    },
     "random_forest": {
         "n_estimators": ("int", 60, 300),
         "max_depth": ("int", 6, 24),

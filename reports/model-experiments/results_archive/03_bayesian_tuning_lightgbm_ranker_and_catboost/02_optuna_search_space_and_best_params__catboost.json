@@ -1,0 +1,37 @@
+{
+  "model": "catboost",
+  "method": "Optuna TPE (Bayesian)",
+  "objective": "mean grouped-CV macro F1 on train (maximise)",
+  "n_trials": 20,
+  "n_splits": 5,
+  "seed": 42,
+  "search_space": {
+    "iterations": [
+      "int",
+      150,
+      600
+    ],
+    "depth": [
+      "int",
+      4,
+      9
+    ],
+    "learning_rate": [
+      "float_log",
+      0.03,
+      0.3
+    ],
+    "l2_leaf_reg": [
+      "float_log",
+      1.0,
+      20.0
+    ]
+  },
+  "best_value": 0.7155347400460682,
+  "best_params": {
+    "iterations": 468,
+    "depth": 8,
+    "learning_rate": 0.031078150213413893,
+    "l2_leaf_reg": 5.357183336383365
+  }
+}

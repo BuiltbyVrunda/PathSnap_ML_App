@@ -1,0 +1,14 @@
+{
+  "final_model": "lightgbm_ranker",
+  "final_params": {
+    "n_estimators": 410,
+    "learning_rate": 0.034345084207755734,
+    "num_leaves": 53,
+    "min_child_samples": 123,
+    "reg_lambda": 2.1142332035497158e-06
+  },
+  "selection_cv_macro_f1": 0.7222088331878992,
+  "selection_rule": "highest grouped-CV macro F1 on train (student_test not used)",
+  "artifact": "artifacts\\models\\pathsnap_scorer.joblib",
+  "rf_tuning": "skipped by decision (time cost; untuned baseline kept)"
+}

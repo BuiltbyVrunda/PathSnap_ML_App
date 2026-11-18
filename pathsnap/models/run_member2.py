@@ -16,14 +16,8 @@ from pathlib import Path
 import pandas as pd
 
 from .schema import RANDOM_SEED
-from .training.experiments import Data, evaluate_scorer, fit_scorer, run_comparison, summary_row
+from .training.experiments import evaluate_scorer, fit_scorer, load_data, run_comparison, summary_row
 from .tuning.bayes import SEARCH_SPACES, bayes_search
-
-
-def load_data(folder: str | Path) -> Data:
-    f = Path(folder)
-    rd = lambda n: pd.read_csv(f / f"{n}.csv", dtype={"trip_id": str})  # noqa: E731
-    return Data(rd("candidates"), rd("observations"), rd("references"))
 
 
 def main(argv=None):

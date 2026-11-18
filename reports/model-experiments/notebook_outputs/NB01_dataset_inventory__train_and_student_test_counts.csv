@@ -1,0 +1,3 @@
+split,trips,observations,candidate_rows,aligned,ambiguous,unaligned
+train,80,208417,1978331,158564,27757,22096
+student_test,10,19160,229773,15979,3160,21

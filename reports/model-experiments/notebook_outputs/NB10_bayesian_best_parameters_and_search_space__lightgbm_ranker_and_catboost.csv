@@ -1,0 +1,3 @@
+model,n_trials,best_cv_macro_f1,best_params,search_space
+lightgbm_ranker,20,0.7222088331878992,"{""n_estimators"": 410, ""learning_rate"": 0.034345084207755734, ""num_leaves"": 53, ""min_child_samples"": 123, ""reg_lambda"": 2.1142332035497158e-06}","{""n_estimators"": [""int"", 80, 500], ""learning_rate"": [""float_log"", 0.02, 0.3], ""num_leaves"": [""int"", 8, 96], ""min_child_samples"": [""int"", 10, 200], ""reg_lambda"": [""float_log"", 1e-06, 10.0]}"
+catboost,20,0.7155347400460682,"{""iterations"": 468, ""depth"": 8, ""learning_rate"": 0.031078150213413893, ""l2_leaf_reg"": 5.357183336383365}","{""iterations"": [""int"", 150, 600], ""depth"": [""int"", 4, 9], ""learning_rate"": [""float_log"", 0.03, 0.3], ""l2_leaf_reg"": [""float_log"", 1.0, 20.0]}"

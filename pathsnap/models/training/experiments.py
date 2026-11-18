@@ -26,7 +26,7 @@ from ..features import feature_matrix
 from ..schema import RANDOM_SEED
 from .folds import trip_folds
 from .labels import label_candidates
-from .models import MODEL_NAMES, default_params, make_pipeline
+from .models import MODEL_NAMES, default_params, emission_mode, fit_kwargs, make_pipeline, positive_scores
 from .scorer import CandidateScorer
 
 
@@ -70,11 +70,18 @@ class Data:
         return d
 
 
-def _score_with(pipe, data: Data):
+def load_data(folder: str | Path) -> Data:
+    """Read <folder>/{candidates,observations,references}.csv (trip_id kept as string)."""
+    f = Path(folder)
+    rd = lambda n: pd.read_csv(f / f"{n}.csv", dtype={"trip_id": str})  # noqa: E731
+    return Data(rd("candidates"), rd("observations"), rd("references"))
+
+
+def _score_with(pipe, data: Data, name: str):
     t0 = time.perf_counter()
     X = data.X
-    p = pipe.predict_proba(X)[:, 1] if len(X) else np.zeros(0)
-    scored = make_scored(data.candidates, p)
+    p = positive_scores(pipe, X) if len(X) else np.zeros(0)
+    scored = make_scored(data.candidates, p, emission_mode(name))
     matches = classifier_matches(scored, data.observations)
     return scored, matches, time.perf_counter() - t0
 
@@ -92,10 +99,10 @@ def cross_validate(name: str, data: Data, params: dict | None = None, n_splits: 
         tr_mask = np.isin(trip_arr, tr) & (y_all >= 0)
         pipe = make_pipeline(name, params, seed)
         t0 = time.perf_counter()
-        pipe.fit(data.X[tr_mask], y_all[tr_mask])
+        pipe.fit(data.X[tr_mask], y_all[tr_mask], **fit_kwargs(name, data.candidates[tr_mask]))
         fit_s = time.perf_counter() - t0
         vd = data.subset(va)
-        scored, matches, inf_s = _score_with(pipe, vd)
+        scored, matches, inf_s = _score_with(pipe, vd, name)
         m = evaluate(vd.references, matches, vd.candidates, scored)
         rows.append({"fold": k, "n_train_trips": len(tr), "n_val_trips": len(va),
                      "train_seconds": fit_s, "inference_seconds": inf_s, **m})

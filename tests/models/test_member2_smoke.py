@@ -12,7 +12,7 @@ from pathsnap.models.schema import FEATURE_ORDER, SCORED_COLS
 from pathsnap.models.synthetic import synthetic_split
 from pathsnap.models.training.experiments import Data, cross_validate, fit_scorer
 from pathsnap.models.training.folds import trip_folds
-from pathsnap.models.training.models import MODEL_NAMES
+from pathsnap.models.training.models import ALL_MODEL_NAMES, MODEL_NAMES
 from pathsnap.models.training.scorer import CandidateScorer
 from pathsnap.models.tuning.bayes import bayes_search
 
@@ -20,6 +20,8 @@ SMALL = {
     "decision_tree": dict(min_samples_leaf=1),
     "random_forest": dict(n_estimators=10, min_samples_leaf=1, n_jobs=1),
     "hist_gradient_boosting": dict(max_iter=10, min_samples_leaf=1),
+    "lightgbm_ranker": dict(n_estimators=10, min_child_samples=1, num_leaves=4),
+    "catboost": dict(iterations=10, depth=2),
 }
 
 
@@ -42,7 +44,7 @@ def test_grouped_folds_never_split_a_trip(syn):
     assert sorted(sum((va for _, va in folds), [])) == trips  # every trip validated exactly once
 
 
-@pytest.mark.parametrize("name", MODEL_NAMES)
+@pytest.mark.parametrize("name", ALL_MODEL_NAMES)
 def test_all_five_models_train_and_emit_scores(name, train, syn):
     scorer = fit_scorer(name, train, SMALL.get(name))
     held = syn["heldout"]
@@ -129,3 +131,16 @@ def test_small_bayes_search_logs_and_refits(train, tmp_path):
     assert len(hist) == 3 and (tmp_path / "hist_gradient_boosting_search.json").exists()
     scorer = fit_scorer("hist_gradient_boosting", train, res["best_params"])  # refit on train
     assert scorer.params["max_iter"] == res["best_params"]["max_iter"]
+
+
+def test_softmax_emissions_for_rankers():
+    c = pd.DataFrame({"trip_id": "00000001", "obs_idx": [0, 0, 1], "arc_id": [5, 9, 2]})
+    em = normalise_emissions(c, np.array([1.0, 1.0 + np.log(3.0), 500.0]), mode="softmax")
+    assert np.allclose(em, [0.25, 0.75, 1.0])  # stable even for large scores
+
+
+def test_ranker_learns_to_prefer_the_reference_arc(train, syn):
+    scorer = fit_scorer("lightgbm_ranker", train, dict(n_estimators=30, min_child_samples=1, num_leaves=4))
+    held = syn["heldout"]
+    _, matches = scorer.score(held["candidates"], held["observations"])
+    assert matches["arc_id"].iloc[:2].tolist() == [0, 1]

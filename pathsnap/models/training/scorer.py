@@ -27,6 +27,7 @@ from sklearn.pipeline import Pipeline
 
 from ..evaluation.emissions import classifier_matches, make_scored
 from ..features import feature_matrix
+from .models import emission_mode, fit_kwargs, positive_scores
 from ..schema import CANDIDATE_COLS, FEATURE_ORDER, OBS_KEY, SCORED_COLS
 
 
@@ -55,7 +56,7 @@ class CandidateScorer:
             seed: int, extra: dict | None = None) -> "CandidateScorer":
         X = feature_matrix(labelled)
         t0 = time.perf_counter()
-        pipeline.fit(X, labelled["label"].to_numpy())
+        pipeline.fit(X, labelled["label"].to_numpy(), **fit_kwargs(model_name, labelled))
         extra = {**(extra or {}), "train_seconds": time.perf_counter() - t0,
                  "n_train_rows": int(len(labelled)),
                  "n_train_trips": int(labelled["trip_id"].nunique())}
@@ -66,7 +67,7 @@ class CandidateScorer:
         if len(candidates) == 0:
             return np.zeros(0)
         X = feature_matrix(candidates, self.feature_order)
-        return self.pipeline.predict_proba(X)[:, 1]
+        return positive_scores(self.pipeline, X)
 
     def score(self, candidates: pd.DataFrame, observations: pd.DataFrame):
         """Inference only: never receives reference columns. Returns (ScoredCandidate, ClassifierMatch)."""
@@ -77,7 +78,7 @@ class CandidateScorer:
         cands = cands.reset_index(drop=True)
         if cands.duplicated(["trip_id", "obs_idx", "arc_id"]).any():
             raise ValueError("candidate keys (trip_id, obs_idx, arc_id) must be unique")
-        scored = make_scored(cands, self.positive_proba(cands))
+        scored = make_scored(cands, self.positive_proba(cands), emission_mode(self.model_name))
         matches = classifier_matches(scored, observations)
         return scored[SCORED_COLS], matches
 

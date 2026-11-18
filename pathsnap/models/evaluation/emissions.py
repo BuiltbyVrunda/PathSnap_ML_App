@@ -7,17 +7,27 @@ import pandas as pd
 from ..schema import CANDIDATE_COLS, MATCH_COLS, OBS_KEY
 
 
-def normalise_emissions(cands: pd.DataFrame, probs: np.ndarray) -> np.ndarray:
-    """Divide each positive-class probability by the sum within its observation.
+def normalise_emissions(cands: pd.DataFrame, probs: np.ndarray, mode: str = "proportional") -> np.ndarray:
+    """Convert candidate scores to emissions that sum to 1 within each observation.
+
+    mode="proportional" (probabilistic classifiers): divide each positive-class probability by the sum
+    within its observation. mode="softmax" (rankers): softmax of the raw ranking scores within the
+    observation (shifted by the observation maximum for numerical stability).
 
     A zero (or non-finite) sum gives uniform emissions. Emissions sum to 1 per non-empty
     candidate set. Input order is preserved.
     """
     p = np.nan_to_num(np.asarray(probs, dtype="float64"), nan=0.0, posinf=0.0, neginf=0.0)
-    p = np.clip(p, 0.0, None)
     if len(p) == 0:
         return p
     key = cands.groupby(OBS_KEY, sort=False).ngroup().to_numpy()
+    if mode == "softmax":
+        mx = np.full(key.max() + 1, -np.inf)
+        np.maximum.at(mx, key, p)
+        p = np.exp(p - mx[key])
+    elif mode != "proportional":
+        raise ValueError(f"unknown emission mode {mode!r}")
+    p = np.clip(p, 0.0, None)
     sums = np.bincount(key, weights=p)
     sizes = np.bincount(key).astype("float64")
     s, n = sums[key], sizes[key]
@@ -26,10 +36,10 @@ def normalise_emissions(cands: pd.DataFrame, probs: np.ndarray) -> np.ndarray:
     return em
 
 
-def make_scored(cands: pd.DataFrame, probs: np.ndarray) -> pd.DataFrame:
+def make_scored(cands: pd.DataFrame, probs: np.ndarray, mode: str = "proportional") -> pd.DataFrame:
     """ScoredCandidate table: Candidate columns unchanged + emission_prob, sorted by key."""
     scored = cands[CANDIDATE_COLS].copy()
-    scored["emission_prob"] = normalise_emissions(cands, probs)
+    scored["emission_prob"] = normalise_emissions(cands, probs, mode)
     return scored.sort_values(["trip_id", "obs_idx", "arc_id"], kind="mergesort").reset_index(drop=True)
 
 

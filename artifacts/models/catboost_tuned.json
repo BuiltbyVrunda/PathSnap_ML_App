@@ -1,0 +1,33 @@
+{
+  "model_name": "catboost",
+  "params": {
+    "iterations": 468,
+    "depth": 8,
+    "learning_rate": 0.031078150213413893,
+    "l2_leaf_reg": 5.357183336383365,
+    "random_seed": 42
+  },
+  "seed": 42,
+  "feature_order": [
+    "along_arc_fraction",
+    "distance_m",
+    "heading_diff_deg",
+    "speed_mps",
+    "delta_t_s",
+    "distance_rank",
+    "distance_gap_to_min_m",
+    "n_candidates"
+  ],
+  "extra": {
+    "train_seconds": 58.14048410000396,
+    "n_train_rows": 1531262,
+    "n_train_trips": 80
+  },
+  "versions": {
+    "python": "3.13.14",
+    "scikit-learn": "1.7.2",
+    "numpy": "2.2.6",
+    "pandas": "2.3.2",
+    "joblib": "1.5.2"
+  }
+}

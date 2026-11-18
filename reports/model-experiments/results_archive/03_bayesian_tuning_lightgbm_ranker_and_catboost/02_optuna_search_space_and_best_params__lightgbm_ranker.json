@@ -1,0 +1,43 @@
+{
+  "model": "lightgbm_ranker",
+  "method": "Optuna TPE (Bayesian)",
+  "objective": "mean grouped-CV macro F1 on train (maximise)",
+  "n_trials": 20,
+  "n_splits": 5,
+  "seed": 42,
+  "search_space": {
+    "n_estimators": [
+      "int",
+      80,
+      500
+    ],
+    "learning_rate": [
+      "float_log",
+      0.02,
+      0.3
+    ],
+    "num_leaves": [
+      "int",
+      8,
+      96
+    ],
+    "min_child_samples": [
+      "int",
+      10,
+      200
+    ],
+    "reg_lambda": [
+      "float_log",
+      1e-06,
+      10.0
+    ]
+  },
+  "best_value": 0.7222088331878992,
+  "best_params": {
+    "n_estimators": 410,
+    "learning_rate": 0.034345084207755734,
+    "num_leaves": 53,
+    "min_child_samples": 123,
+    "reg_lambda": 2.1142332035497158e-06
+  }
+}

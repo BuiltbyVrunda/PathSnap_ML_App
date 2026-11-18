@@ -1,0 +1,21 @@
+{
+  "n_observations": 19160,
+  "n_aligned": 15979,
+  "n_ambiguous": 3160,
+  "n_unaligned": 21,
+  "n_correct": 13195,
+  "top1_accuracy": 0.8257713248638838,
+  "n_null_predictions": 0,
+  "macro_f1": 0.6973094862705719,
+  "macro_precision": 0.729961948936297,
+  "macro_recall": 0.6840348846890011,
+  "n_classes": 2880,
+  "n_candidate_miss": 4,
+  "candidate_miss_rate": 0.00025032855623005195,
+  "log_loss_n": 15975,
+  "log_loss_coverage": 0.9997496714437699,
+  "log_loss": 0.4550049559356128,
+  "inference_seconds_median": 0.38625550000870135,
+  "n_candidate_rows": 229773,
+  "continuity": null
+}
