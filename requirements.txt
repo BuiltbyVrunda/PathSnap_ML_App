@@ -1,15 +1,23 @@
-# PathSnap service (API + UI). Pinned versions tested with Python 3.9.6.
+# PathSnap service (API + UI) with the full team pipeline.
+# Needs Python 3.10 or newer (Members 1-3 use 3.10+ syntax). Tested with Python 3.12/3.13.
+# scikit-learn, numpy, pandas and joblib match the versions Member 2 saved the model with.
+
+# Pipeline on Laptop 1: Member 1 (data), Member 2 (model), Member 3 (decoder)
+numpy==2.2.6
+pandas==2.3.2
+scikit-learn==1.7.2
+joblib==1.5.2
+lightgbm>=4.5,<5
+scipy>=1.13,<2
+pyproj>=3.7,<4
+shapely>=2.1,<3
 
 # API (Laptop 1)
-fastapi==0.115.14
-uvicorn==0.32.1
-numpy==2.0.2
-shapely==2.0.7
+fastapi>=0.115,<1
+uvicorn>=0.32,<1
 
 # UI (Laptop 2)
-streamlit==1.50.0
-folium==0.20.0
-streamlit-folium==0.25.3
-requests==2.32.5
-# urllib3 2.x prints an OpenSSL warning on macOS's built-in Python 3.9; 1.26 avoids it.
-urllib3==1.26.20
+streamlit>=1.50,<2
+folium>=0.20,<1
+streamlit-folium>=0.25,<1
+requests>=2.32,<3

@@ -6,9 +6,9 @@ from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 
 from . import ground_truth, route, trips
-from .config import TRIPS_DIR
-from .loader import TripDataError, load_points, load_road_network
-from .predictor import predict_trip
+from .config import MODEL_PATH, TRIPS_DIR
+from .loader import TripDataError, load_trip_inputs
+from .predictor import DECODER_CONFIG, ModelNotAvailable, load_scorer, predict_trip
 
 # ---- Logging: one clean line per request, shown to the evaluator during the demo ----
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
@@ -18,6 +18,14 @@ logging.getLogger("uvicorn.access").disabled = True
 
 app = FastAPI(title="PathSnap API")
 log.info("PathSnap API starting | trip folder: %s | %d trips found", TRIPS_DIR, len(trips.list_trip_ids()))
+
+# Load the model once at start-up so the first request is not slow, and so a missing
+# model is reported immediately in the console.
+try:
+    _scorer = load_scorer()
+    log.info("Model loaded | %s | %s", _scorer.model_name, MODEL_PATH)
+except ModelNotAvailable as err:
+    log.error("MODEL NOT LOADED | %s", err)
 
 
 @app.middleware("http")
@@ -70,31 +78,33 @@ def predict(body: PredictRequest, request: Request):
 
     # 2. Load the prediction inputs only (GPS + road network; no ground truth).
     try:
-        points = load_points(folder, trip_id)
-        network = load_road_network(folder, trip_id)
+        trip = load_trip_inputs(folder)
     except TripDataError as err:
         raise HTTPException(status_code=500, detail=str(err))
+    points = trip.track  # (N, 3): lon, lat, time_s. Row = obs_idx
 
-    # 3. Predict one arc per GPS point. The predictor never sees ground truth.
+    # 3. Run the pipeline: candidates -> model scores -> HMM/Viterbi. Never sees ground truth.
     start = time.perf_counter()
-    predicted = predict_trip(points, network)
+    try:
+        decoded = predict_trip(trip)
+    except ModelNotAvailable as err:
+        raise HTTPException(status_code=500, detail=str(err))
     inference_ms = (time.perf_counter() - start) * 1000
-    if len(predicted) != len(points):
-        raise HTTPException(status_code=500, detail="Predictor returned the wrong number of arcs.")
+    if len(decoded.matches) != len(points):
+        raise HTTPException(status_code=500, detail="Decoder returned the wrong number of matches.")
 
-    # 4. Build the drawable route from the prediction.
-    parts = route.build_route_parts(predicted, network)
-    geometry = route.parts_to_geometry(parts, network)
-    continuity = route.route_continuity(predicted, network)
+    # 4. Build the drawable route from the decoded route parts.
+    geometry = route.parts_to_geometry(decoded, trip)
+    continuity = route.route_continuity(decoded, trip, DECODER_CONFIG)
 
     # 5. Score AFTER predicting, on the server. Only aggregate counts come back.
     try:
-        metrics = ground_truth.score_trip(folder, trip_id, points, network, predicted)
-    except TripDataError as err:
-        raise HTTPException(status_code=500, detail=str(err))
+        metrics = ground_truth.score_trip(trip, folder, decoded)
+    except (OSError, ValueError) as err:
+        raise HTTPException(status_code=500, detail=f"Scoring failed for trip {trip_id}: {err}")
 
-    matched = sum(a is not None for a in predicted)
-    breaks = sum(p["break_before"] is not None for p in parts)
+    matched = sum(m.arc_id is not None for m in decoded.matches)
+    breaks = sum(p.break_before is not None for p in decoded.route_parts)
     if matched == 0:
         status = "no_match"
     elif matched < len(points) or breaks > 0:
@@ -119,7 +129,7 @@ def predict(body: PredictRequest, request: Request):
         # --- extras for the UI ---
         "route_continuity": continuity,
         "gps_points": points[:, :2].tolist(),  # [[lon, lat], ...] observed input, not ground truth
-        "matches": [{"obs_idx": i, "arc_id": a, "unmatched_reason": None if a is not None else "no_candidates"}
-                    for i, a in enumerate(predicted)],
+        "matches": [{"obs_idx": m.obs_idx, "arc_id": m.arc_id, "unmatched_reason": m.unmatched_reason}
+                    for m in decoded.matches],
         "inference_ms": round(inference_ms, 1),
     }

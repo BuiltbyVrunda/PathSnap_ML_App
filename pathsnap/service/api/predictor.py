@@ -1,51 +1,59 @@
-"""Model call used by the API.
+"""The real PathSnap prediction pipeline, run on Laptop 1.
 
-==========================  PLACEHOLDER  ==========================
-TODO(team): replace the body of predict_trip() with the real pipeline before the demo:
-  1. candidate generation       (Member 1, pathsnap/data/candidates)
-  2. trained classifier scores  (Member 2, pathsnap/models)
-  3. HMM + Viterbi decoding     (Member 3, pathsnap/decoder)
-Keep the same signature so the API does not need to change.
-====================================================================
+    GPS + road network
+      -> 1. candidate road arcs near each GPS point   (Member 1, pathsnap.data.candidates)
+      -> 2. ML score for every candidate              (Member 2, saved LightGBM ranker)
+      -> 3. HMM + Viterbi decoding into one route     (Member 3, pathsnap.decoder)
 
-The predictor receives ONLY the GPS points and the road network.
+The predictor receives ONLY the inference inputs (the Trip from loader.py).
 It never sees the ground-truth route.
 """
-from typing import List, Optional
+import dataclasses
+from functools import lru_cache
 
-import numpy as np
-import shapely
+import pandas as pd
 
-from .geo import LocalProjection
-from .loader import RoadNetwork
+from pathsnap.data.candidates import CandidateConfig, generate_candidates
+from pathsnap.data.loading import Trip
+from pathsnap.decoder import DecodedTrip, DecoderConfig, decode_trip
+from pathsnap.models.training.scorer import CandidateScorer
 
-# Points farther than this from every arc get no prediction (None).
-MAX_MATCH_DISTANCE_M = 100.0
+from .config import MODEL_PATH
+
+# Same settings the team used for development (Member 1 and Member 3 defaults).
+CANDIDATE_CONFIG = CandidateConfig()   # 60 m search radius, up to 24 candidates per point
+DECODER_CONFIG = DecoderConfig()       # 30 s GPS-gap threshold, 45 m/s max speed, ...
 
 
-def predict_trip(points: np.ndarray, road_network: RoadNetwork) -> List[Optional[int]]:
-    """Return one predicted arc_id per GPS point (None = no arc found).
+class ModelNotAvailable(Exception):
+    """The saved model file is missing or is only a Git LFS pointer."""
 
-    PLACEHOLDER method: nearest arc by straight-line distance in metres.
-    It ignores arc direction and road connectivity, which the real HMM will use.
-    """
-    # Lon/lat -> metres, centred on this trip.
-    proj = LocalProjection.around(points[:, :2])
-    gps_xy = proj.to_xy(points[:, :2])
-    node_xy = proj.to_xy(road_network.nodes)
 
-    # One straight line per arc: from its from-node to its to-node.
-    starts = node_xy[road_network.arcs[:, 0]]
-    ends = node_xy[road_network.arcs[:, 1]]
-    arc_lines = shapely.linestrings(np.stack([starts, ends], axis=1))
+@lru_cache(maxsize=1)
+def load_scorer() -> CandidateScorer:
+    """Load Member 2's saved model once and keep it in memory for every request."""
+    if not MODEL_PATH.is_file():
+        raise ModelNotAvailable(f"Model file not found: {MODEL_PATH} (set PATHSNAP_MODEL_PATH).")
+    if MODEL_PATH.stat().st_size < 1024:  # a Git LFS pointer is ~130 bytes, the real model ~2 MB
+        raise ModelNotAvailable(f"{MODEL_PATH.name} is a Git LFS pointer. Run `git lfs pull` first.")
+    return CandidateScorer.load(MODEL_PATH)
 
-    # R-tree spatial index: finds the closest arc quickly, even with 50k+ arcs.
-    tree = shapely.STRtree(arc_lines)
-    point_idx, arc_idx = tree.query_nearest(
-        shapely.points(gps_xy), max_distance=MAX_MATCH_DISTANCE_M, all_matches=False
-    )
 
-    predicted: List[Optional[int]] = [None] * len(points)
-    for p, a in zip(point_idx, arc_idx):
-        predicted[int(p)] = int(a)
-    return predicted
+def predict_trip(trip: Trip) -> DecodedTrip:
+    """Return Member 3's DecodedTrip: one match per GPS point plus the connected route parts."""
+    # 1. Candidate road arcs for every GPS point (Member 1).
+    candidates = generate_candidates(trip, CANDIDATE_CONFIG)
+    trip_record = trip.to_record()  # the shared v1 trip format the decoder expects
+
+    # 2. Score the candidates with the trained model (Member 2).
+    #    Output: each candidate gets an emission probability (they sum to 1 per GPS point).
+    candidate_table = pd.DataFrame([dataclasses.asdict(c) for c in candidates])
+    observation_table = pd.DataFrame(trip_record["observations"]).assign(trip_id=trip.trip_id)
+    if candidate_table.empty:
+        scored_rows = []  # no road near any point: the decoder returns an all-unmatched trip
+    else:
+        scored, _greedy_matches = load_scorer().score(candidate_table, observation_table)
+        scored_rows = scored.to_dict("records")
+
+    # 3. HMM + Viterbi decoding over the whole trip (Member 3).
+    return decode_trip(trip_record, scored_rows, DECODER_CONFIG)
