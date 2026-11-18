@@ -1,0 +1,27 @@
+# Organizer-provided datasets and development-only derivatives
+/Student folder/
+/PathSnap_student_materials/
+/data/
+/datasets/
+/raw_data/
+/processed_data/
+/train/
+/student_test/
+/evaluator_test/
+/evaluator_testing/
+*.track
+*.nodes
+*.arcs
+*.route
+/runs/
+
+# Local environment and caches
+.env
+.env.*
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+build/
+dist/
