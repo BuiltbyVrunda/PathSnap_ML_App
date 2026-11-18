@@ -41,6 +41,10 @@ tests/
 
 The [team plan](PATHSNAP_TEAM_PLAN.md) defines the integration flow from GPS and road files through candidate generation, model scoring, route decoding, and the evaluator UI. Shared configuration goes in `configs/`, end-to-end checks in `tests/integration/`, and report evidence in `reports/`.
 
+## Member 1 data pipeline
+
+Use Python 3.12 and install `python -m pip install -r requirements-data.txt` for inference and reference scoring, or install `requirements-eda.txt` for the full audit and plots. Run the data integration tests with `python -m unittest discover -s tests/integration -v`. The [data handoff](handoffs/01-data-and-features.md#implementation-and-reproduction) explains the API and how to generate development tables, and [Section 2](reports/eda/section-2.md) records measured results and the reasons for the data-processing choices.
+
 ## Local data and model files
 
 Keep the provided dataset at `Student folder/Student folder/` or under `data/`. The dataset directories, raw trip files, local experiment output under `runs/`, and organiser materials are ignored by Git.

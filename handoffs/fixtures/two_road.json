@@ -1,0 +1,150 @@
+{
+  "trip": {
+    "trip_id": "00000001",
+    "observations": [
+      {
+        "obs_idx": 0,
+        "lon": 0.00025,
+        "lat": 0.0,
+        "time_s": 1.0
+      },
+      {
+        "obs_idx": 1,
+        "lon": 0.00175,
+        "lat": 0.0,
+        "time_s": 11.0
+      }
+    ],
+    "nodes": [
+      {
+        "node_id": 0,
+        "lon": 0.0,
+        "lat": 0.0
+      },
+      {
+        "node_id": 1,
+        "lon": 0.001,
+        "lat": 0.0
+      },
+      {
+        "node_id": 2,
+        "lon": 0.002,
+        "lat": 0.0
+      },
+      {
+        "node_id": 3,
+        "lon": 0.0,
+        "lat": 0.0001
+      },
+      {
+        "node_id": 4,
+        "lon": 0.001,
+        "lat": 0.0001
+      },
+      {
+        "node_id": 5,
+        "lon": 0.002,
+        "lat": 0.0001
+      }
+    ],
+    "arcs": [
+      {
+        "arc_id": 0,
+        "from_node_id": 0,
+        "to_node_id": 1,
+        "length_m": 111.31949079327357
+      },
+      {
+        "arc_id": 1,
+        "from_node_id": 1,
+        "to_node_id": 2,
+        "length_m": 111.31949079327357
+      },
+      {
+        "arc_id": 2,
+        "from_node_id": 3,
+        "to_node_id": 4,
+        "length_m": 111.31949079316139
+      },
+      {
+        "arc_id": 3,
+        "from_node_id": 4,
+        "to_node_id": 5,
+        "length_m": 111.31949079316139
+      }
+    ]
+  },
+  "candidate_config": {
+    "radius_m": 30,
+    "max_candidates": 4,
+    "min_heading_move_m": 3.0,
+    "max_heading_gap_s": 10.0
+  },
+  "candidates": [
+    {
+      "trip_id": "00000001",
+      "obs_idx": 0,
+      "arc_id": 0,
+      "along_arc_fraction": 0.25000000000000006,
+      "distance_m": 3.552713678800501e-15,
+      "heading_diff_deg": null,
+      "speed_mps": null,
+      "delta_t_s": null
+    },
+    {
+      "trip_id": "00000001",
+      "obs_idx": 0,
+      "arc_id": 2,
+      "along_arc_fraction": 0.2499999999997485,
+      "distance_m": 11.057427582583724,
+      "heading_diff_deg": null,
+      "speed_mps": null,
+      "delta_t_s": null
+    },
+    {
+      "trip_id": "00000001",
+      "obs_idx": 1,
+      "arc_id": 1,
+      "along_arc_fraction": 0.7499999999999998,
+      "distance_m": 1.4210854715202004e-14,
+      "heading_diff_deg": 0.0,
+      "speed_mps": 16.697923618991034,
+      "delta_t_s": 10.0
+    },
+    {
+      "trip_id": "00000001",
+      "obs_idx": 1,
+      "arc_id": 3,
+      "along_arc_fraction": 0.7500000000002514,
+      "distance_m": 11.057427582583724,
+      "heading_diff_deg": 2.908677743107546e-10,
+      "speed_mps": 16.697923618991034,
+      "delta_t_s": 10.0
+    }
+  ],
+  "references": [
+    {
+      "trip_id": "00000001",
+      "obs_idx": 0,
+      "ref_arc_id": 0,
+      "alignment_status": "aligned"
+    },
+    {
+      "trip_id": "00000001",
+      "obs_idx": 1,
+      "ref_arc_id": 1,
+      "alignment_status": "aligned"
+    }
+  ],
+  "coverage": {
+    "observations": 2,
+    "aligned": 2,
+    "ambiguous": 0,
+    "unaligned": 0,
+    "zero_candidates": 0,
+    "aligned_zero_candidates": 0,
+    "candidate_rows": 4,
+    "candidate_misses": 0,
+    "candidate_miss_rate": 0.0
+  }
+}
