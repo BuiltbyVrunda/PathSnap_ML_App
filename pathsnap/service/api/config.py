@@ -11,3 +11,9 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 TRIPS_DIR = Path(
     os.environ.get("PATHSNAP_TRIPS_DIR", REPO_ROOT / "data" / "student_test")
 ).resolve()
+
+# Member 2's saved candidate scorer (the final tuned LightGBM ranker).
+# The .joblib files are stored with Git LFS: run `git lfs pull` after cloning.
+MODEL_PATH = Path(
+    os.environ.get("PATHSNAP_MODEL_PATH", REPO_ROOT / "artifacts" / "models" / "pathsnap_scorer.joblib")
+).resolve()

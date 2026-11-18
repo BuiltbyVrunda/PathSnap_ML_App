@@ -109,13 +109,14 @@ def show_metrics(result):
     col1, col2, col3 = st.columns(3)
     if metrics:
         col1.metric("Pointwise accuracy", f"{metrics['accuracy']:.1%}")
-        col1.caption(f"{metrics['correct']} correct of {metrics['aligned']} aligned GPS points")
+        col1.caption(f"{metrics['correct']} correct of {metrics['aligned']} aligned GPS points"
+                     + (f" · macro F1 {metrics['macro_f1']:.3f}" if metrics.get("macro_f1") is not None else ""))
     else:
         col1.metric("Pointwise accuracy", "n/a")
         col1.caption("No reference available for this trip")
     if cont["value"] is not None:
         col2.metric("Route continuity", f"{cont['value']:.1%}")
-        col2.caption(f"{cont['connected']} of {cont['transitions']} arc-to-arc steps are connected")
+        col2.caption(f"{cont['connected']} of {cont['transitions']} GPS-to-GPS steps are reachable on the road network")
     else:
         col2.metric("Route continuity", "n/a")
     col3.metric("Status", result["status"])
